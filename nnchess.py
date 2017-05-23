@@ -124,18 +124,22 @@ class TreeTraversal:
         self.endgame_evaluations += 1
         return egEval
 
-      f = pos.fen()
-
       # trivial eval
       if not self.ev_F:
+        f = pos.fen()
         f0 = f.split()[0]
         wt = self._trivial(f0, 'P') + self._trivial(f0, 'Q') * 9 + self._trivial(f0, 'N') * 2.9 + \
             self._trivial(f0, 'B') * 3 + self._trivial(f0, 'R') * 5 + self._trivial(f0, 'K') * 1000  
         bl = self._trivial(f0, 'p') + self._trivial(f0, 'q') * 9 + self._trivial(f0, 'n') * 2.9 + \
             self._trivial(f0, 'b') * 3 + self._trivial(f0, 'r') * 5 + self._trivial(f0, 'k') * 1000   
-        return wt - bl
+        turn = -1
+
+        if pos.turn:
+          turn = 1
+          
+        return turn * (wt - bl)
       else:
-        return self.ev_F(f)
+        return self.ev_F(pos)
   
   def search(self, pos, depth, cb = None):
       ans = []
@@ -196,7 +200,7 @@ class TreeTraversal:
       self.nodeCnt += 1
 
       if depth == 0:
-          return turn * self.evaluate(pos)
+          return self.evaluate(pos)
   
       bestValue = self.LOWERBOUND_VALUE
       # optimization
@@ -224,7 +228,7 @@ class TreeTraversal:
       return bestValue
     
 
-class NNPlayer(Analyzer):
+class NNPlayer:
   def __init__(self, openingBookFile, endGameDir, maxDepth, cb = None, ev_F = None, bookMax=-1):
       self.gameStage = 1 # 1 - opening, 2 - midgame, endgame
       self.earlyGame = EarlyGame(openingBookFile)
@@ -313,7 +317,8 @@ class Simulation:
     print self.p_b.state
     print self.brd.fen()
 
-  def start(self):
-    while not self.brd.is_game_over() and self.p_b.state["moveNumber"] != 40:
+  def start(self, moves):
+    while not self.brd.is_game_over() and \
+      self.p_b.state["moveNumber"] != moves:
         self._iter()
         
