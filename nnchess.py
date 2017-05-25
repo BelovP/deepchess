@@ -154,8 +154,7 @@ class TreeTraversal:
 
       for m in pos.legal_moves:
           pos.push(m)
-          score = -self._negamax(pos, depth - 1, 
-            self.LOWERBOUND_VALUE, -self.LOWERBOUND_VALUE, -player)
+          score = -self._negamax(pos, depth - 1, -player)
           ans.append((score, m))
           pos.pop()
           
@@ -175,27 +174,26 @@ class TreeTraversal:
       # white should have bigger value first
       return (bestMove, nodes, cacheHits, endgame_evaluations, ans)
           
-  def _negamax(self, pos, depth, alpha, beta, turn):
-      alphaOrig = alpha
+  def _negamax(self, pos, depth, turn):
       fen = pos.fen()
   
-      cacheHit = self.posCache.has_key(fen)
+      # cacheHit = self.posCache.has_key(fen)
       
-      if cacheHit:
-        cacheEntry = self.posCache[fen]
+      # if cacheHit:
+      #   cacheEntry = self.posCache[fen]
 
-      if cacheHit and cacheEntry[0] >= depth:
-          if cacheEntry[1] == self.EXACT:
-              self.cache_hits += 1
-              return cacheEntry[2]
-          elif cacheEntry[1] == self.LOWERBOUND:
-              alpha = max(alpha, cacheEntry[2])
-          elif cacheEntry[1] == self.UPPERBOUND:
-              beta = min(beta, cacheEntry[2])
+      # if cacheHit and cacheEntry[0] >= depth:
+      #     if cacheEntry[1] == self.EXACT:
+      #         self.cache_hits += 1
+      #         return cacheEntry[2]
+      #     elif cacheEntry[1] == self.LOWERBOUND:
+      #         alpha = max(alpha, cacheEntry[2])
+      #     elif cacheEntry[1] == self.UPPERBOUND:
+      #         beta = min(beta, cacheEntry[2])
   
-          if alpha >= beta:
-              self.cache_hits += 1
-              return cacheEntry[2]
+      #     if alpha >= beta:
+      #         self.cache_hits += 1
+      #         return cacheEntry[2]
       
       self.nodeCnt += 1
 
@@ -207,24 +205,10 @@ class TreeTraversal:
       # childNodes := OrderMoves(childNodes)
       for move in pos.legal_moves:
           pos.push(move)
-          v = -self._negamax(pos, depth - 1, -beta, -alpha, -turn)
+          v = -self._negamax(pos, depth - 1, -turn)
           pos.pop()
           bestValue = max(bestValue, v)
-          alpha = max(alpha, v)
-          
-          if alpha >= beta:
-              break
 
-      flag = self.EXACT
-      
-      if bestValue <= alphaOrig:
-          flag = self.UPPERBOUND
-      elif bestValue >= beta:
-          flag = self.LOWERBOUND
-
-      cacheEntry = (depth, flag, bestValue)
-      self.posCache[fen] = cacheEntry
-  
       return bestValue
     
 
@@ -271,7 +255,7 @@ class NNPlayer:
           self.state["uniq_nodes_calculated"] += sres[1]
           self.state["cache_hits"] += sres[2]
           self.state["endgame_evaluations"] += sres[3]
-          self.state["last_move_eval"] = sorted(sres[4], key=lambda t: -t[0])[:3]
+          self.state["last_move_eval"] = sorted(sres[4], key=lambda t: -t[0])[:10]
       
       self.state["time_spent"] = timer() - timer_start
       board.push(m)
